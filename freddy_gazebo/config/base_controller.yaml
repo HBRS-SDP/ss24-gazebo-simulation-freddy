@@ -1,0 +1,25 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 1000  # Hz
+
+    velocity_controller:
+      type: velocity_controllers/JointGroupVelocityController
+
+    position_controller:
+      type: position_controllers/JointGroupPositionController
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+velocity_controller:
+  ros__parameters:
+    joint:
+      - freddy_base_joint
+
+# velocity_controller:
+#   ros__parameters:
+#     joints:
+#       - left_front_wheel_joint
+
+# For omnidirectional base control
+# Velocity control system, aand odometry publisher
