@@ -36,6 +36,7 @@ def generate_launch_description():
     xacro_file = os.path.join(pkg_freddy_description,
                                     'robots',
                                     'freddy_arms_gz.urdf.xacro')
+    bridge_yaml = os.path.join(pkg_freddy_gazebo, 'config', 'bridge.yaml')
 
     doc = xacro.parse(open(xacro_file))
     xacro.process_doc(doc)
@@ -50,6 +51,13 @@ def generate_launch_description():
     )
 
     # TODO: ADD BRIDGE
+    ros_gz_bridge = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        name='ros_gz_bridge',
+        parameters=[{'config_file': bridge_yaml}],
+        output='screen'
+    )
 
     # Robot state publisher
     node_robot_state_publisher = Node(
@@ -72,4 +80,5 @@ def generate_launch_description():
         gz_sim,
         node_robot_state_publisher,
         spawn_entity,
+        ros_gz_bridge
     ])
