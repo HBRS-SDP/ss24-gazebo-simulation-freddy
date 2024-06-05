@@ -1,3 +1,6 @@
 [submodule "freddy_description"]
 	path = /src/freddy_description
 	url = git@github.com:arunimaCh29/freddy_description.git
+[submodule "src/freddy_description"]
+	path = src/freddy_description
+	url = git@github.com:arunimaCh29/freddy_description.git
