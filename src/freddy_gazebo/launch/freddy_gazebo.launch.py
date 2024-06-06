@@ -1,5 +1,6 @@
 import os
 
+import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import AppendEnvironmentVariable, IncludeLaunchDescription
@@ -8,8 +9,6 @@ from launch.substitutions import Command, FindExecutable, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
-
-import xacro
 
 
 def generate_launch_description():
@@ -38,9 +37,9 @@ def generate_launch_description():
                                     'freddy_arms_gz.urdf.xacro')
     bridge_yaml = os.path.join(pkg_freddy_gazebo, 'config', 'bridge.yaml')
 
-    doc = xacro.parse(open(xacro_file))
-    xacro.process_doc(doc)
-    description_params = {'robot_description': doc.toxml()}
+    robot_description = xacro.process_file(xacro_file, \
+                    mappings={'sim_gz': 'true'}).toxml()
+    description_params = {'robot_description': robot_description}
 
     # Gazebo simulation
     gz_sim = IncludeLaunchDescription(
