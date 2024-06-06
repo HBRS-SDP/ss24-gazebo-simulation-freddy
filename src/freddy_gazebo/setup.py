@@ -1,4 +1,6 @@
 from setuptools import find_packages, setup
+import os
+import glob
 
 package_name = 'freddy_gazebo'
 
@@ -10,12 +12,10 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/launch', ['launch/load_world_and_robot.launch.py']),
-        ('share/' + package_name + '/launch', ['launch/freddy_gazebo.launch.py']),
-        ('share/' + package_name + '/worlds', ['worlds/my_world.sdf']),
-        ('share/' + package_name + '/config', ['config/base_controller.yaml']),
-        ('share/' + package_name + '/config', ['config/torso_controller.yaml']),
-        ('share/' + package_name + '/urdf', ['urdf/freddy.urdf']),
+        (os.path.join('share', package_name, 'launch'), glob.glob(os.path.join('launch', '*launch.py'))),
+        (os.path.join('share', package_name, 'worlds'), glob.glob(os.path.join('worlds', '*.sdf'))),
+        (os.path.join('share', package_name, 'config'), glob.glob(os.path.join('config', '*.yaml'))),
+        (os.path.join('share', package_name, 'urdf'), glob.glob(os.path.join('urdf', '*.urdf'))),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

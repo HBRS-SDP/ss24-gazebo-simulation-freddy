@@ -11,6 +11,8 @@ from launch.event_handlers import OnProcessExit
 from launch_ros.substitutions import FindPackageShare
 from launch.conditions import IfCondition, UnlessCondition
 
+import xacro
+
 
 def generate_launch_description():
     # Package directories
@@ -33,24 +35,14 @@ def generate_launch_description():
 
     # World and robot files
     world_file = os.path.join(pkg_freddy_gazebo, 'worlds', 'my_world.sdf')
-    robot_description_content = Command(
-        [
-            PathJoinSubstitution(
-                [
-                    FindExecutable(name="xacro")]),
-            " ",
-            PathJoinSubstitution(
-                [
-                    FindPackageShare("freddy_description"),
-                    "robots",
-                    # "freddy_gz.urdf.xacro"
-                    "freddy_gz_torso.urdf.xacro"
-                ]
-            ),
-            " ",
-            "sim_gz:=true",
-        ]
-    )
+    xacro_file = os.path.join(pkg_freddy_description,
+                                    'robots',
+                                    'freddy_arms_gz.urdf.xacro')
+    bridge_yaml = os.path.join(pkg_freddy_gazebo, 'config', 'bridge.yaml')
+
+    doc = xacro.parse(open(xacro_file))
+    xacro.process_doc(doc)
+    description_params = {'robot_description': doc.toxml()}
 
     declare_joint_state_gui = DeclareLaunchArgument(
         "joint_state_gui",
@@ -74,14 +66,21 @@ def generate_launch_description():
         launch_arguments={'gz_args': ['-r -v4 ', world_file], 'on_exit_shutdown': 'true'}.items(),
     )
 
+    # TODO: ADD BRIDGE
+    ros_gz_bridge = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        name='ros_gz_bridge',
+        parameters=[{'config_file': bridge_yaml}],
+        output='screen'
+    )
+
     # Robot state publisher
     node_robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='screen',
-        parameters=[{
-            'robot_description': ParameterValue(robot_description_content, value_type=str),
-        }]
+        parameters=[description_params]
     )
 
     # Spawn entity
@@ -101,4 +100,5 @@ def generate_launch_description():
         gz_sim,
         node_robot_state_publisher,
         spawn_entity,
+        ros_gz_bridge
     ])
