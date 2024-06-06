@@ -14,6 +14,7 @@ setup(
         ('share/' + package_name + '/launch', ['launch/freddy_gazebo.launch.py']),
         ('share/' + package_name + '/worlds', ['worlds/my_world.sdf']),
         ('share/' + package_name + '/config', ['config/base_controller.yaml']),
+        ('share/' + package_name + '/config', ['config/torso_controller.yaml']),
         ('share/' + package_name + '/urdf', ['urdf/freddy.urdf']),
     ],
     install_requires=['setuptools'],

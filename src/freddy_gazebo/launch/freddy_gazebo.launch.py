@@ -2,12 +2,14 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import AppendEnvironmentVariable, IncludeLaunchDescription
+from launch.actions import AppendEnvironmentVariable, IncludeLaunchDescription, ExecuteProcess, RegisterEventHandler, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command, FindExecutable, PathJoinSubstitution
+from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.descriptions import ParameterValue
+from launch.event_handlers import OnProcessExit
 from launch_ros.substitutions import FindPackageShare
+from launch.conditions import IfCondition, UnlessCondition
 
 
 def generate_launch_description():
@@ -41,7 +43,8 @@ def generate_launch_description():
                 [
                     FindPackageShare("freddy_description"),
                     "robots",
-                    "freddy_gz.urdf.xacro"
+                    # "freddy_gz.urdf.xacro"
+                    "freddy_gz_torso.urdf.xacro"
                 ]
             ),
             " ",
@@ -49,12 +52,26 @@ def generate_launch_description():
         ]
     )
 
+    declare_joint_state_gui = DeclareLaunchArgument(
+        "joint_state_gui",
+        default_value="true",
+        description="Launch joint state gui publisher",
+    )
+  
+    zero_positions_config = os.path.join(
+        get_package_share_directory("freddy_description"),
+        "config",
+        "initial_positions.yaml",
+    )
+   
+
+ 
     # Gazebo simulation
     gz_sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')
         ),
-        launch_arguments={'gz_args': ['-r -v4 ', world_file], 'on_exit_shutdown': 'true'}.items()
+        launch_arguments={'gz_args': ['-r -v4 ', world_file], 'on_exit_shutdown': 'true'}.items(),
     )
 
     # Robot state publisher
@@ -77,6 +94,10 @@ def generate_launch_description():
 
     return LaunchDescription([
         set_env_vars_resources,
+        declare_joint_state_gui,
+            
+        # joint_state_publisher_gui_node,
+        # joint_state_publisher_node,
         gz_sim,
         node_robot_state_publisher,
         spawn_entity,
