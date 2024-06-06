@@ -59,10 +59,10 @@ def generate_launch_description():
     )
 
     # Robot state publisher
-    node_robot_state_publisher = Node(
+    robot_state_publisher_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
-        output='screen',
+        output='both',
         parameters=[description_params]
     )
 
@@ -77,7 +77,7 @@ def generate_launch_description():
     return LaunchDescription([
         set_env_vars_resources,
         gz_sim,
-        node_robot_state_publisher,
+        robot_state_publisher_node,
         spawn_entity,
         ros_gz_bridge
     ])
