@@ -16,19 +16,20 @@ def generate_launch_description():
     pkg_ros_gz_sim = get_package_share_directory('ros_gz_sim')
     pkg_freddy_gazebo = get_package_share_directory('freddy_gazebo')
     pkg_freddy_description = get_package_share_directory('freddy_description')
+    pkg_kortex_description = get_package_share_directory('kortex_description')
 
     # Resource paths
-    resource_paths = [
-        pkg_freddy_description,
-        os.path.join(pkg_freddy_description, 'freddy_base_description', 'meshes'),
-        os.path.join(pkg_freddy_description, 'freddy_base_description', 'meshes', 'sensors'),
-        os.path.join(pkg_freddy_description, 'freddy_torso_description', 'meshes'),
-    ]
-    resource_paths_str = os.pathsep.join(resource_paths)
-    set_env_vars_resources = AppendEnvironmentVariable(
-        name='GZ_SIM_RESOURCE_PATH',
-        value=resource_paths_str,
-    )
+    # resource_paths = [
+    #     pkg_freddy_description,
+    #     os.path.join(pkg_freddy_description, 'freddy_base_description', 'meshes'),
+    #     os.path.join(pkg_freddy_description, 'freddy_base_description', 'meshes', 'sensors'),
+    #     os.path.join(pkg_freddy_description, 'freddy_torso_description', 'meshes'),
+    # ]
+    # resource_paths_str = os.pathsep.join(resource_paths)
+    # set_env_vars_resources = AppendEnvironmentVariable(
+    #     name='GZ_SIM_RESOURCE_PATH',
+    #     value=resource_paths_str,
+    # )
 
     # World and robot files
     world_file = os.path.join(pkg_freddy_gazebo, 'worlds', 'my_world.sdf')
@@ -39,7 +40,13 @@ def generate_launch_description():
 
     robot_description = xacro.process_file(xacro_file, \
                     mappings={'sim_gz': 'true'}).toxml()
-    description_params = {'robot_description': robot_description}
+    robot_description_params = {'robot_description': robot_description}
+
+    kortex_controllers = PathJoinSubstitution([
+        pkg_kortex_description,
+        "arms/" + "gen3/" + "7dof/config",
+        "ros2_controllers.yaml",
+    ])
 
     # Gazebo simulation
     gz_sim = IncludeLaunchDescription(
@@ -49,7 +56,7 @@ def generate_launch_description():
         launch_arguments={'gz_args': ['-r -v4 ', world_file], 'on_exit_shutdown': 'true'}.items()
     )
 
-    # TODO: ADD BRIDGE
+    # ROS2 Bridge to Gazebo Harmonic
     ros_gz_bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
@@ -63,7 +70,7 @@ def generate_launch_description():
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='both',
-        parameters=[description_params]
+        parameters=[robot_description_params]
     )
 
     # Spawn entity
@@ -74,9 +81,21 @@ def generate_launch_description():
         output='screen'
     )
 
+    # Kinova Kortex additions below
+    control_node = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[kortex_controllers],
+        remappings=[
+            ("~/robot_description", "/robot_description"),
+        ],
+        output="both",
+    )
+
     return LaunchDescription([
-        set_env_vars_resources,
+        # set_env_vars_resources,
         gz_sim,
+        control_node,
         robot_state_publisher_node,
         spawn_entity,
         ros_gz_bridge
