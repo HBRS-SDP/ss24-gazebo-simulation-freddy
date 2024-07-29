@@ -5,19 +5,43 @@ controller_manager:
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    joint_trajectory_controller:
+    joint_trajectory_controller_right:
       type: joint_trajectory_controller/JointTrajectoryController
 
-    twist_controller:
-      type: picknik_twist_controller/PicknikTwistController
+    joint_trajectory_controller_left:
+      type: joint_trajectory_controller/JointTrajectoryController
 
-    robotiq_gripper_controller:
-      type: position_controllers/GripperActionController
+#     velocity_controller:
+#       type: velocity_controllers/JointPositionController
 
-    fault_controller:
-      type: picknik_reset_fault_controller/PicknikResetFaultController
+velocity_controller:
+  ros__parameters:
+    joints:
+      - kinova_left_joint_1
+      - kinova_left_joint_2
+      - kinova_left_joint_3
+      - kinova_left_joint_4
+      - kinova_left_joint_5
+      - kinova_left_joint_6
+      - kinova_left_joint_7
+      # - kinova_right_joint_1
+      # - kinova_right_joint_2
+      # - kinova_right_joint_3
+      # - kinova_right_joint_4
+      # - kinova_right_joint_5
+      # - kinova_right_joint_6
+      # - kinova_right_joint_7
 
-joint_trajectory_controller:
+    # twist_controller:
+    #   type: picknik_twist_controller/PicknikTwistController
+
+    # robotiq_gripper_controller:
+    #   type: position_controllers/GripperActionController
+
+    # fault_controller:
+    #   type: picknik_reset_fault_controller/PicknikResetFaultController
+
+joint_trajectory_controller_left:
   ros__parameters:
     joints:
       - kinova_left_joint_1
@@ -39,13 +63,25 @@ joint_trajectory_controller:
       stopped_velocity_tolerance: 0.0
       goal_time: 0.0
 
-twist_controller:
+
+joint_trajectory_controller_right:
   ros__parameters:
-    joint: tcp
-    interface_names:
-      - twist.linear.x
-      - twist.linear.y
-      - twist.linear.z
-      - twist.angular.x
-      - twist.angular.y
-      - twist.angular.z
+    joints:
+      - kinova_right_joint_1
+      - kinova_right_joint_2
+      - kinova_right_joint_3
+      - kinova_right_joint_4
+      - kinova_right_joint_5
+      - kinova_right_joint_6
+      - kinova_right_joint_7
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    state_publish_rate: 100.0
+    action_monitor_rate: 20.0
+    allow_partial_joints_goal: false
+    constraints:
+      stopped_velocity_tolerance: 0.0
+      goal_time: 0.0
