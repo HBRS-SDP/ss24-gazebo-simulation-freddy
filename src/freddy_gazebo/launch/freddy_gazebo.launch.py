@@ -1,5 +1,6 @@
 import os
 
+import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import AppendEnvironmentVariable, IncludeLaunchDescription, ExecuteProcess, RegisterEventHandler, DeclareLaunchArgument
@@ -10,8 +11,6 @@ from launch_ros.descriptions import ParameterValue
 from launch.event_handlers import OnProcessExit
 from launch_ros.substitutions import FindPackageShare
 from launch.conditions import IfCondition, UnlessCondition
-
-import xacro
 
 
 def generate_launch_description():
@@ -93,7 +92,7 @@ def generate_launch_description():
     )
 
     # Robot state publisher
-    node_robot_state_publisher = Node(
+    robot_state_publisher_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
         parameters=[{'robot_description': robot_description},{"use_sim_time":True}])
