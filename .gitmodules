@@ -4,6 +4,3 @@
 [submodule "src/freddy_description"]
 	path = src/freddy_description
 	url = git@github.com:arunimaCh29/freddy_description.git
-[submodule "src/ros2_kortex"]
-	path = src/ros2_kortex
-	url = git@github.com:SiriusBlue5120/ros2_kortex.git
