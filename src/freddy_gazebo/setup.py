@@ -26,6 +26,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            f'control_publisher = {package_name}.control_publisher:main',
         ],
     },
 )
