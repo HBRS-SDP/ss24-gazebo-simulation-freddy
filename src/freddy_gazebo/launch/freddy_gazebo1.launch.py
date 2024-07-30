@@ -1,6 +1,5 @@
 import os
 
-import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import AppendEnvironmentVariable, IncludeLaunchDescription, ExecuteProcess, RegisterEventHandler, DeclareLaunchArgument
@@ -11,6 +10,8 @@ from launch_ros.descriptions import ParameterValue
 from launch.event_handlers import OnProcessExit
 from launch_ros.substitutions import FindPackageShare
 from launch.conditions import IfCondition, UnlessCondition
+
+import xacro
 
 
 def generate_launch_description():
@@ -37,7 +38,7 @@ def generate_launch_description():
     world_file = os.path.join(pkg_freddy_gazebo, 'worlds', 'my_world.sdf')
     xacro_file = os.path.join(pkg_freddy_description,
                                     'robots',
-                                    'freddy_gz_torso.urdf.xacro')
+                                    'freddy_gz_torso1.urdf.xacro')
     bridge_yaml = os.path.join(pkg_freddy_gazebo, 'config', 'bridge.yaml')
 
    
@@ -45,27 +46,23 @@ def generate_launch_description():
                     mappings={'sim_gz': 'true'}).toxml()
     robot_description_params = {'robot_description': robot_description}
 
-    declare_joint_state_gui = DeclareLaunchArgument(
-        "joint_state_gui",
-        default_value="true",
-        description="Launch joint state gui publisher",
-    )
   
     load_joint_state_broadcaster = ExecuteProcess(
         cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
              'joint_state_broadcaster'],
         output='screen'
     )
-    load_joint_state = Node(
-        package="joint_state_publisher_gui",
-        executable="joint_state_publisher_gui"
-        )
     
   
-    load_joint_trajectory_controller = ExecuteProcess(
+    load_joint_trajectory_controller_left = ExecuteProcess(
         cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-             'joint_trajectory_controller'],
-        output='screen'
+             'joint_trajectory_controller_left'],
+        output='both'
+    )
+    load_joint_trajectory_controller_right = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+             'joint_trajectory_controller_right'],
+        output='both'
     )
 
     load_joint_velocity_controller = ExecuteProcess(
@@ -82,20 +79,12 @@ def generate_launch_description():
         launch_arguments={'gz_args': ['-r -v4 ', world_file,]}.items(),
     )
 
-    # TODO: ADD BRIDGE
-    ros_gz_bridge = Node(
-        package='ros_gz_bridge',
-        executable='parameter_bridge',
-        name='ros_gz_bridge',
-        parameters=[{'config_file': bridge_yaml}],
-        output='screen'
-    )
-
     # Robot state publisher
-    robot_state_publisher_node = Node(
+    node_robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
         parameters=[{'robot_description': robot_description},{"use_sim_time":True}])
+
     # Spawn entity
     spawn_entity = Node(
         package='ros_gz_sim',
@@ -107,14 +96,14 @@ def generate_launch_description():
     return LaunchDescription([
         set_env_vars_resources,
         node_robot_state_publisher,
-        load_joint_state,
         RegisterEventHandler(
             event_handler=OnProcessExit(
                 target_action=spawn_entity,
                 on_exit=[load_joint_state_broadcaster],
             )
         ),
-        load_joint_trajectory_controller,
+        load_joint_trajectory_controller_left,
+        load_joint_trajectory_controller_right,
         gz_sim,
         spawn_entity,
         # ros_gz_bridge
