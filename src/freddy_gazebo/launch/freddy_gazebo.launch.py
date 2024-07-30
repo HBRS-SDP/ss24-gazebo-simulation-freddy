@@ -34,7 +34,7 @@ def generate_launch_description():
     world_file = os.path.join(pkg_freddy_gazebo, 'worlds', 'my_world.sdf')
     xacro_file = os.path.join(pkg_freddy_description,
                                     'robots',
-                                    'freddy_arms_gz.urdf.xacro')
+                                    'freddy_gz.urdf.xacro')
     bridge_yaml = os.path.join(pkg_freddy_gazebo, 'config', 'bridge.yaml')
 
     robot_description = xacro.process_file(xacro_file, \
