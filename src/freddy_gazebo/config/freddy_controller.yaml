@@ -5,10 +5,10 @@ controller_manager:
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    joint_trajectory_controller_right:
+    arm_right_joint_trajectory_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
-    joint_trajectory_controller_left:
+    arm_left_joint_trajectory_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
     base_position_controller:
@@ -20,7 +20,7 @@ controller_manager:
     base_effort_controller:
       type: effort_controllers/JointGroupEffortController
 
-joint_trajectory_controller_left:
+arm_left_joint_trajectory_controller:
   ros__parameters:
     joints:
       - kinova_left_joint_1
@@ -43,7 +43,7 @@ joint_trajectory_controller_left:
       goal_time: 0.0
 
 
-joint_trajectory_controller_right:
+arm_right_joint_trajectory_controller:
   ros__parameters:
     joints:
       - kinova_right_joint_1
