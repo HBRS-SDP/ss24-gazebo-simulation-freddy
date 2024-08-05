@@ -16,6 +16,7 @@ setup(
         (os.path.join('share', package_name, 'worlds'), glob.glob(os.path.join('worlds', '*.sdf'))),
         (os.path.join('share', package_name, 'config'), glob.glob(os.path.join('config', '*.yaml'))),
         (os.path.join('share', package_name, 'urdf'), glob.glob(os.path.join('urdf', '*.urdf'))),
+        (os.path.join('share', package_name, 'scripts'), glob.glob(os.path.join('scripts', '*.py'))),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -27,6 +28,7 @@ setup(
     entry_points={
         'console_scripts': [
             f'control_publisher = {package_name}.control_publisher:main',
+            f'arms_control = {package_name}.arms_control:main',
         ],
     },
 )
