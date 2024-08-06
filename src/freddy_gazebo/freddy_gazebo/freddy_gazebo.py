@@ -99,7 +99,7 @@ class KeyboardPress():
 
     def __init__(self):
 
-        self.keyBindings={
+        self.key_bindings={
             'w': (1, 0, 0, 0, 0, 0, 0, 0),
             's': (-1, 0, 0, 0, 0, 0, 0, 0),
             'e': (0, 1, 0, 0, 0, 0, 0, 0),
@@ -117,14 +117,14 @@ class KeyboardPress():
             'o': (0, 0, 0, 0, 0, 0, 0, 1),
             'l': (0, 0, 0, 0, 0, 0, 0, -1),
         }
-        self.speedBindings={
+        self.speed_bindings={
                 '+': (1.03, 1.1),
                 '-': (.6, .9)
         }
-        self.componentBindings={
-            'q':(1,0,0), # Left arm
-            'a': (0,1,0), # Right arm
-            'z': (0,0,1) # Base 
+        self.component_bindings={
+            'q': 'arm_left', # Left arm
+            'a': 'arm_right', # Right arm
+            'z': 'base' # Base 
         }
         self.speed = 0.01
 
@@ -138,23 +138,31 @@ class KeyboardPress():
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
         return key
     
-    def modifyPosition(self,commands,component):
+    def modifyPosition(self,key,component):
 
-        key = self.getKey(termios.tcgetattr(sys.stdin))
-        if key in  self.keyBindings.keys():
-            moveBy = self.keyBindings[key]
-        elif key in self.speedBindings.keys():
-            self.speed = self.speed * self.speedBindings[key][0 if component[2] else 1]
+        # key = self.getKey(termios.tcgetattr(sys.stdin))
+        if key in  self.key_bindings.keys():
+            moveBy = self.key_bindings[key]
+        elif key in self.speed_bindings.keys():
+            self.speed = self.speed * self.speed_bindings[key][1 if component == 'base' else 0]
 
-        commands = commands + (moveBy *self.speed)
+        increment = moveBy *self.speed
 
-        return commands
+        return increment
+    
+    def checkComponent(self,key):
+        if key in self.component_bindings.keys():
+            return self.component_bindings[key]
+        return []
+        
             
 
 
 def main(args=None):
     rclpy.init(args=args)
     freddy_gazebo_publisher = FreddyGazeboPublisher()
+    keyboard_press = KeyboardPress()
+    component = 'arm_left' # by default component = base
     
     spinner = threading.Thread(target=rclpy.spin, args=(freddy_gazebo_publisher,))
     spinner.start()
@@ -162,6 +170,14 @@ def main(args=None):
     try:
         while True:
             # Get pressed key
+            key = keyboard_press.getKey(termios.tcgetattr(sys.stdin))
+            component_check = keyboard_press.checkComponent(key)
+            component = component if component_check == [] else component_check
+            increment = keyboard_press.modifyPosition(key,component)
+            freddy_gazebo_publisher.update_commands(component,increment)
+            # if component == []:
+            #     raise Exception('Key does not correspond to any component, press \'q\': Left arm, \'a\': Right arm, \'z\': Base')
+
 
             # Update commands
 
