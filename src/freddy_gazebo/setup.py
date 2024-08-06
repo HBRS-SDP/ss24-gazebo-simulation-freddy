@@ -29,6 +29,7 @@ setup(
         'console_scripts': [
             f'control_publisher = {package_name}.control_publisher:main',
             f'arms_control = {package_name}.arms_control:main',
+            f'freddy_gazebo = {package_name}.freddy_gazebo:main',
         ],
     },
 )
