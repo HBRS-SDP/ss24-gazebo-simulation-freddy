@@ -2,6 +2,8 @@ import sys
 import termios
 import threading
 import tty
+import yaml
+from pprint import pprint
 
 import numpy as np
 import rclpy
@@ -52,27 +54,18 @@ class FreddyGazeboPublisher(Node):
             "base": Float64MultiArray(),
         }
 
+        with open('install/freddy_gazebo/share/freddy_gazebo/config/freddy_controller.yaml') as f:
+            controller_params = yaml.safe_load(f)
+
         self.arm_joints = {
-            "arm_left": [
-                "kinova_left_joint_1",
-                "kinova_left_joint_2",
-                "kinova_left_joint_3",
-                "kinova_left_joint_4",
-                "kinova_left_joint_5",
-                "kinova_left_joint_6",
-                "kinova_left_joint_7",
-            ],
-            "arm_right": [
-                "kinova_right_joint_1",
-                "kinova_right_joint_2",
-                "kinova_right_joint_3",
-                "kinova_right_joint_4",
-                "kinova_right_joint_5",
-                "kinova_right_joint_6",
-                "kinova_right_joint_7",
-            ],
+            "arm_left": controller_params["arm_left_joint_trajectory_controller"]\
+                                        ["ros__parameters"]["joints"],
+            "arm_right": controller_params["arm_left_joint_trajectory_controller"]\
+                                        ["ros__parameters"]["joints"],
             "frame_id": "base_link"
         }
+
+        print(self.arm_joints)
 
 
     def update_commands(self, component_name: str, increment: np.ndarray, ) -> None:
