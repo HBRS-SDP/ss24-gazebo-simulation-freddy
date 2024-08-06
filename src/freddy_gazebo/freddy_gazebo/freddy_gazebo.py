@@ -35,7 +35,7 @@ class FreddyGazeboPublisher(Node):
         
         self.arm_trajectory_duration = 2
 
-        self.publishers: dict[str, Publisher] = {
+        self.robot_publishers: dict[str, Publisher] = {
             "arm_left": self.arm_left_pose_publisher,
             "arm_right": self.arm_right_pose_publisher,
             "base": self.base_publisher,
@@ -85,8 +85,8 @@ class FreddyGazeboPublisher(Node):
 
 
     def publish_commands(self, ) -> None:
-        for component_name in self.publishers.keys():
-            self.publishers[component_name].publish(self.msgs[component_name])
+        for component_name in self.robot_publishers:
+            self.robot_publishers[component_name].publish(self.msgs[component_name])
 
         return None
 
