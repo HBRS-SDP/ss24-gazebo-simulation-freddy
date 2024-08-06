@@ -60,7 +60,7 @@ class FreddyGazeboPublisher(Node):
         self.arm_joints = {
             "arm_left": controller_params["arm_left_joint_trajectory_controller"]\
                                         ["ros__parameters"]["joints"],
-            "arm_right": controller_params["arm_left_joint_trajectory_controller"]\
+            "arm_right": controller_params["arm_right_joint_trajectory_controller"]\
                                         ["ros__parameters"]["joints"],
             "frame_id": "base_link"
         }
@@ -84,6 +84,7 @@ class FreddyGazeboPublisher(Node):
                 msg.header = Header()
                 msg.header.frame_id = self.arm_joints["frame_id"] 
                 msg.joint_names = self.arm_joints[component_name]
+                print(msg.joint_names)
 
                 trajectory_point = JointTrajectoryPoint()
                 trajectory_point.positions = self.commands[component_name].tolist()
@@ -91,6 +92,7 @@ class FreddyGazeboPublisher(Node):
 
                 msg.points.append(trajectory_point)
                 self.msgs[component_name] = msg
+                print(self.msgs[component_name])
 
             elif component_name == "base":
                 msg = Float64MultiArray()
@@ -103,6 +105,7 @@ class FreddyGazeboPublisher(Node):
 
     def publish_commands(self, ) -> None:
         for component_name in self.robot_publishers:
+            print(self.msgs[component_name])
             self.robot_publishers[component_name].publish(self.msgs[component_name])
 
         return None
@@ -196,7 +199,7 @@ def main(args=None):
 
             increment = keyboard_press.modifyPosition(key,component)
 
-            if increment :
+            if type(increment) == 'ndArray' :
                 freddy_gazebo_publisher.update_commands(component,increment)
             # if component == []:
             #     raise Exception('Key does not correspond to any component, press \'q\': Left arm, \'a\': Right arm, \'z\': Base')
