@@ -1,4 +1,7 @@
+import sys
+import termios
 import threading
+import tty
 
 import numpy as np
 import rclpy
@@ -7,12 +10,6 @@ from rclpy.node import Node
 from rclpy.publisher import Publisher
 from std_msgs.msg import Float64MultiArray, Header
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from builtin_interfaces.msg import Duration
-from std_msgs.msg import Header, Float64MultiArray
-import numpy as np
-import termios
-import tty
-import sys
 
 
 class FreddyGazeboPublisher(Node):
@@ -55,6 +52,28 @@ class FreddyGazeboPublisher(Node):
             "base": Float64MultiArray(),
         }
 
+        self.arm_joints = {
+            "arm_left": [
+                "kinova_left_joint_1",
+                "kinova_left_joint_2",
+                "kinova_left_joint_3",
+                "kinova_left_joint_4",
+                "kinova_left_joint_5",
+                "kinova_left_joint_6",
+                "kinova_left_joint_7",
+            ],
+            "arm_right": [
+                "kinova_right_joint_1",
+                "kinova_right_joint_2",
+                "kinova_right_joint_3",
+                "kinova_right_joint_4",
+                "kinova_right_joint_5",
+                "kinova_right_joint_6",
+                "kinova_right_joint_7",
+            ],
+            "frame_id": "base_link"
+        }
+
 
     def update_commands(self, component_name: str, increment: np.ndarray, ) -> None:
         # Since commands are of variable length, only take the required number of elements
@@ -69,10 +88,13 @@ class FreddyGazeboPublisher(Node):
         for component_name in self.commands:
             if "arm" in component_name:
                 msg = JointTrajectory()
+                msg.header = Header()
+                msg.header.frame_id = self.arm_joints["frame_id"] 
+                msg.joint_names = self.arm_joints[component_name]
 
                 trajectory_point = JointTrajectoryPoint()
                 trajectory_point.positions = self.commands[component_name].tolist()
-                trajectory_point._time_from_start = Duration(sec=self.arm_trajectory_duration)
+                trajectory_point._time_from_start = Duration(sec=self.arm_trajectory_duration, nanosec=0)
 
                 msg.points.append(trajectory_point)
                 self.msgs[component_name] = msg
