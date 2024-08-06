@@ -126,11 +126,11 @@ class KeyboardPress():
             'a': 'arm_right', # Right arm
             'z': 'base' # Base 
         }
-        self.speed = 0.01
+        self.speed = 1.00
 
 
 
-    def getKey(settings):
+    def getKey(self,settings):
     
         tty.setraw(sys.stdin.fileno())
         # sys.stdin.read() returns a string on Linux
@@ -142,9 +142,12 @@ class KeyboardPress():
 
         # key = self.getKey(termios.tcgetattr(sys.stdin))
         if key in  self.key_bindings.keys():
-            moveBy = self.key_bindings[key]
+            moveBy = np.array(self.key_bindings[key])
         elif key in self.speed_bindings.keys():
-            self.speed = self.speed * self.speed_bindings[key][1 if component == 'base' else 0]
+            print(self.speed_bindings[key][1 if component == 'base' else 0])
+            self.speed *= self.speed_bindings[key][1 if component == 'base' else 0]
+            return
+        
 
         increment = moveBy *self.speed
 
@@ -172,9 +175,14 @@ def main(args=None):
             # Get pressed key
             key = keyboard_press.getKey(termios.tcgetattr(sys.stdin))
             component_check = keyboard_press.checkComponent(key)
-            component = component if component_check == [] else component_check
+            if component_check != []:
+                component = component_check
+                continue
+
             increment = keyboard_press.modifyPosition(key,component)
-            freddy_gazebo_publisher.update_commands(component,increment)
+
+            if increment :
+                freddy_gazebo_publisher.update_commands(component,increment)
             # if component == []:
             #     raise Exception('Key does not correspond to any component, press \'q\': Left arm, \'a\': Right arm, \'z\': Base')
 
