@@ -1,17 +1,19 @@
 import os
 
+import xacro
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import AppendEnvironmentVariable, IncludeLaunchDescription, ExecuteProcess, RegisterEventHandler, DeclareLaunchArgument, OpaqueFunction
+from launch.actions import (AppendEnvironmentVariable, DeclareLaunchArgument,
+                            ExecuteProcess, IncludeLaunchDescription,
+                            OpaqueFunction, RegisterEventHandler)
+from launch.conditions import IfCondition, UnlessCondition
+from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
+from launch.substitutions import (Command, FindExecutable, LaunchConfiguration,
+                                  PathJoinSubstitution)
 from launch_ros.actions import Node
 from launch_ros.descriptions import ParameterValue
-from launch.event_handlers import OnProcessExit
 from launch_ros.substitutions import FindPackageShare
-from launch.conditions import IfCondition, UnlessCondition
-
-import xacro
 
 
 def select_controller(context, *args, **kwargs):
