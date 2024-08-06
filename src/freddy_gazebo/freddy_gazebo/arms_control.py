@@ -20,7 +20,7 @@ arm_right_joints = [ "kinova_right_joint_1",
       "kinova_right_joint_5",
       "kinova_right_joint_6",
       "kinova_right_joint_7"]
- 
+
 class ArmControllerPublisher(Node):
     """This class executes a sample trajectory for a robotic arm
      
