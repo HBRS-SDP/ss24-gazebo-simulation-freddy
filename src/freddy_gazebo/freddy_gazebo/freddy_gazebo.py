@@ -33,6 +33,8 @@ class FreddyGazeboPublisher(Node):
             10,
             )
         
+        self.arm_trajectory_duration = 2
+
         self.publishers: dict[str, Publisher] = {
             "arm_left": self.arm_left_pose_publisher,
             "arm_right": self.arm_right_pose_publisher,
@@ -52,9 +54,41 @@ class FreddyGazeboPublisher(Node):
         }
 
 
+    def update_commands(self, component_name: str, increment: np.ndarray, ) -> None:
+        # Since commands are of variable length, only take the required number of elements
+        self.commands[component_name] += increment[:len(self.commands[component_name])]
+
+        self.update_msgs()
+
+        return None
+
+
+    def update_msgs(self, ) -> None:
+        for component_name in self.commands:
+            if "arm" in component_name:
+                msg = JointTrajectory()
+
+                trajectory_point = JointTrajectoryPoint()
+                trajectory_point.positions = self.commands[component_name].tolist()
+                trajectory_point._time_from_start = Duration(sec=self.arm_trajectory_duration)
+
+                msg.points.append(trajectory_point)
+                self.msgs[component_name] = msg
+
+            elif component_name == "base":
+                msg = Float64MultiArray()
+                msg.data = self.commands[component_name].tolist()
+
+                self.msgs[component_name] = msg
+
+        return None
+
+
     def publish_commands(self, ) -> None:
-        for component in self.publishers.keys():
-            self.publishers[component].publish(self.msgs[component])
+        for component_name in self.publishers.keys():
+            self.publishers[component_name].publish(self.msgs[component_name])
+
+        return None
 
 
 
