@@ -34,7 +34,7 @@ class FreddyGazeboPublisher(Node):
                 "joints": controller_params["arm_left_joint_trajectory_controller"]\
                     ["ros__parameters"]["joints"],
                 "frame_id": "base_link",
-                "trajectory_duration": 2,
+                "trajectory_duration": 1,
             },
             "arm_right": {
                 "publisher": self.create_publisher(
@@ -47,7 +47,7 @@ class FreddyGazeboPublisher(Node):
                 "joints": controller_params["arm_right_joint_trajectory_controller"]\
                     ["ros__parameters"]["joints"],
                 "frame_id": "base_link",
-                "trajectory_duration": 2,
+                "trajectory_duration": 1,
             },
             "base": {
                 "publisher": self.create_publisher(
@@ -147,8 +147,7 @@ class KeyboardPress():
             'a': 'arm_right', # Right arm
             'z': 'base' # Base 
         }
-        self.speed = 1.00
-
+        self.speed = 0.5
 
 
     def getKey(self,settings):
@@ -163,15 +162,15 @@ class KeyboardPress():
 
         # key = self.getKey(termios.tcgetattr(sys.stdin))
         if key in self.key_bindings.keys():
-            moveBy = np.array(self.key_bindings[key])
+            moveBy: np.ndarray = np.array(self.key_bindings[key])
 
         elif key in self.speed_bindings.keys():
             print(self.speed_bindings[key][1 if component == 'base' else 0])
             self.speed *= self.speed_bindings[key][1 if component == 'base' else 0]
 
-            return
+            return []
         
-        increment = moveBy * self.speed
+        increment: np.ndarray = moveBy * self.speed
 
         return increment
     
@@ -179,7 +178,6 @@ class KeyboardPress():
         if key in self.component_bindings.keys():
             return self.component_bindings[key]
         return []
-        
             
 
 
@@ -203,14 +201,13 @@ def main(args=None):
 
             increment = keyboard_press.modifyPosition(key,component)
 
-            if type(increment) == np.ndarray :
-                freddy_gazebo_publisher.update_state(component,increment)
             # if component == []:
             #     raise Exception('Key does not correspond to any component, 
             #     press \'q\': Left arm, \'a\': Right arm, \'z\': Base')
 
-
             # Update commands
+            if increment:
+                freddy_gazebo_publisher.update_state(component, increment)
 
             # Publish messages
             freddy_gazebo_publisher.publish_commands()
