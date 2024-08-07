@@ -60,6 +60,21 @@ class FreddyGazeboPublisher(Node):
             },
         }
 
+        for component_name in self.components:
+            if "arm" in component_name:
+                with open('install/freddy_description/share/freddy_description/'+\
+                        f'config/initial_positions_{component_name}.yaml') \
+                        as initial_position_file:
+                    initial_positions = yaml.safe_load(initial_position_file)
+                    
+                    self.components[component_name]["state"] = np.array(\
+                        [initial_positions[joint] for joint in initial_positions]
+                        )
+
+
+        print("Loaded keyboard control interface with the following components:")
+        pprint(self.components)
+
 
     def update_state(self, component_name: str, increment: np.ndarray, ) -> None:
         # Since commands are of variable length, only take the required number of elements
@@ -147,7 +162,7 @@ class KeyboardPress():
             'a': 'arm_right', # Right arm
             'z': 'base' # Base 
         }
-        self.speed = 0.5
+        self.speed = 0.1
 
 
     def getKey(self,settings):
@@ -158,6 +173,7 @@ class KeyboardPress():
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
         return key
     
+
     def modifyPosition(self, key, component) -> np.ndarray:
 
         # key = self.getKey(termios.tcgetattr(sys.stdin))
@@ -169,10 +185,12 @@ class KeyboardPress():
             self.speed *= self.speed_bindings[key][1 if component == 'base' else 0]
 
             return []
-        
+
+        elif key == '\x03':
+            return None
+    
         else:
-            if key == '\x03':
-                raise KeyboardInterrupt
+            return []
         
         increment: np.ndarray = moveBy * self.speed
 
@@ -210,7 +228,11 @@ def main(args=None):
             #     press \'q\': Left arm, \'a\': Right arm, \'z\': Base')
 
             # Update commands
-            if len(increment):
+            if increment is None:
+                print("KeyboardInterrupt received, exiting.")
+                break
+
+            elif len(increment):
                 freddy_gazebo_publisher.update_state(component, increment)
 
             # Publish messages
