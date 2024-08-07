@@ -2,11 +2,11 @@ import sys
 import termios
 import threading
 import tty
-import yaml
 from pprint import pprint
 
 import numpy as np
 import rclpy
+import yaml
 from builtin_interfaces.msg import Duration
 from rclpy.node import Node
 from rclpy.publisher import Publisher
@@ -18,98 +18,101 @@ class FreddyGazeboPublisher(Node):
     def __init__(self, ) -> None:
         super().__init__('FreddyGazeboPublisher')
 
-        self.arm_left_pose_publisher: Publisher = self.create_publisher(
-            JointTrajectory, 
-            '/arm_left_joint_trajectory_controller/joint_trajectory', 
-            10,
-            )
-        self.arm_right_pose_publisher: Publisher = self.create_publisher(
-            JointTrajectory, 
-            '/arm_right_joint_trajectory_controller/joint_trajectory', 
-            10,
-            )
-        self.base_publisher: Publisher = self.create_publisher(
-            Float64MultiArray, 
-            '/base_velocity_controller/commands', 
-            10,
-            )
-        
-        self.arm_trajectory_duration = 2
+        with open('install/freddy_gazebo/share/freddy_gazebo/config/freddy_controller.yaml') \
+                as param_file:
+            controller_params = yaml.safe_load(param_file)
 
-        self.robot_publishers: dict[str, Publisher] = {
-            "arm_left": self.arm_left_pose_publisher,
-            "arm_right": self.arm_right_pose_publisher,
-            "base": self.base_publisher,
+        self.components = {
+            "arm_left": {
+                "publisher": self.create_publisher(
+                    JointTrajectory, 
+                    '/arm_left_joint_trajectory_controller/joint_trajectory', 
+                    10,
+                    ),
+                "state": np.zeros(7),
+                "message": JointTrajectory(),
+                "joints": controller_params["arm_left_joint_trajectory_controller"]\
+                    ["ros__parameters"]["joints"],
+                "frame_id": "base_link",
+                "trajectory_duration": 2,
+            },
+            "arm_right": {
+                "publisher": self.create_publisher(
+                    JointTrajectory, 
+                    '/arm_right_joint_trajectory_controller/joint_trajectory', 
+                    10,
+                    ),
+                "state": np.zeros(7),
+                "message": JointTrajectory(),
+                "joints": controller_params["arm_right_joint_trajectory_controller"]\
+                    ["ros__parameters"]["joints"],
+                "frame_id": "base_link",
+                "trajectory_duration": 2,
+            },
+            "base": {
+                "publisher": self.create_publisher(
+                    Float64MultiArray, 
+                    '/base_velocity_controller/commands', 
+                    10,
+                    ),
+                "state": np.zeros(8),
+                "message": Float64MultiArray(),
+            },
         }
 
-        self.commands: dict[str, np.ndarray] = {
-            "arm_left": np.zeros(7),
-            "arm_right": np.zeros(7),
-            "base": np.zeros(8),
-        }
 
-        self.msgs: dict = {
-            "arm_left": JointTrajectory(),
-            "arm_right": JointTrajectory(),
-            "base": Float64MultiArray(),
-        }
-
-        with open('install/freddy_gazebo/share/freddy_gazebo/config/freddy_controller.yaml') as f:
-            controller_params = yaml.safe_load(f)
-
-        self.arm_joints = {
-            "arm_left": controller_params["arm_left_joint_trajectory_controller"]\
-                                        ["ros__parameters"]["joints"],
-            "arm_right": controller_params["arm_right_joint_trajectory_controller"]\
-                                        ["ros__parameters"]["joints"],
-            "frame_id": "base_link"
-        }
-
-        print(self.arm_joints)
-
-
-    def update_commands(self, component_name: str, increment: np.ndarray, ) -> None:
+    def update_state(self, component_name: str, increment: np.ndarray, ) -> None:
         # Since commands are of variable length, only take the required number of elements
-        self.commands[component_name] += increment[:len(self.commands[component_name])]
+        self.components[component_name]["state"] += \
+            increment[:len(self.components[component_name]["state"])]
 
-        self.update_msgs()
+        self.update_messages()
 
         return None
 
 
-    def update_msgs(self, ) -> None:
-        for component_name in self.commands:
+    def update_messages(self, ) -> None:
+        for component_name in self.components:
             if "arm" in component_name:
                 msg = JointTrajectory()
                 msg.header = Header()
-                msg.header.frame_id = self.arm_joints["frame_id"] 
-                msg.joint_names = self.arm_joints[component_name]
-                print(msg.joint_names)
+                msg.header.frame_id = self.components[component_name]["frame_id"] 
+                msg.joint_names = self.components[component_name]["joints"]
+                # print(msg.joint_names)
 
                 trajectory_point = JointTrajectoryPoint()
-                trajectory_point.positions = self.commands[component_name].tolist()
-                trajectory_point._time_from_start = Duration(sec=self.arm_trajectory_duration, nanosec=0)
+                trajectory_point.positions = \
+                    self.components[component_name]["state"].tolist()
+                trajectory_point._time_from_start = \
+                    Duration(
+                        sec=self.components[component_name]["trajectory_duration"], 
+                        nanosec=0,
+                        )
 
                 msg.points.append(trajectory_point)
-                self.msgs[component_name] = msg
-                print(self.msgs[component_name])
+                self.components[component_name]["message"] = msg
+                # print(self.components[component_name]["message"])
 
             elif component_name == "base":
                 msg = Float64MultiArray()
-                msg.data = self.commands[component_name].tolist()
+                msg.data = self.components[component_name]["state"].tolist()
 
-                self.msgs[component_name] = msg
+                self.components[component_name]["message"] = msg
+
+        print(f"Updated states to: ", *[self.components[component_name]["state"] \
+                                        for component_name in self.components])
 
         return None
 
 
     def publish_commands(self, ) -> None:
-        for component_name in self.robot_publishers:
-            print(self.msgs[component_name])
-            self.robot_publishers[component_name].publish(self.msgs[component_name])
+        for component_name in self.components:
+            # print(self.components[component_name]["message"])
+            self.components[component_name]["publisher"].publish(
+                self.components[component_name]["message"]
+                )
 
         return None
-
 
 
 
@@ -156,18 +159,19 @@ class KeyboardPress():
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
         return key
     
-    def modifyPosition(self,key,component):
+    def modifyPosition(self, key, component) -> np.ndarray:
 
         # key = self.getKey(termios.tcgetattr(sys.stdin))
-        if key in  self.key_bindings.keys():
+        if key in self.key_bindings.keys():
             moveBy = np.array(self.key_bindings[key])
+
         elif key in self.speed_bindings.keys():
             print(self.speed_bindings[key][1 if component == 'base' else 0])
             self.speed *= self.speed_bindings[key][1 if component == 'base' else 0]
+
             return
         
-
-        increment = moveBy *self.speed
+        increment = moveBy * self.speed
 
         return increment
     
@@ -199,10 +203,11 @@ def main(args=None):
 
             increment = keyboard_press.modifyPosition(key,component)
 
-            if type(increment) == 'ndArray' :
-                freddy_gazebo_publisher.update_commands(component,increment)
+            if type(increment) == np.ndarray :
+                freddy_gazebo_publisher.update_state(component,increment)
             # if component == []:
-            #     raise Exception('Key does not correspond to any component, press \'q\': Left arm, \'a\': Right arm, \'z\': Base')
+            #     raise Exception('Key does not correspond to any component, 
+            #     press \'q\': Left arm, \'a\': Right arm, \'z\': Base')
 
 
             # Update commands
