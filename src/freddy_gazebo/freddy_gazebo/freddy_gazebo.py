@@ -171,7 +171,8 @@ class KeyboardPress():
             return []
         
         else:
-            return []
+            if key == '\x03':
+                raise KeyboardInterrupt
         
         increment: np.ndarray = moveBy * self.speed
 
