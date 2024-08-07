@@ -68,7 +68,7 @@ class FreddyGazeboPublisher(Node):
                     initial_positions = yaml.safe_load(initial_position_file)
                     
                     self.components[component_name]["state"] = np.array(\
-                        [initial_positions[joint] for joint in initial_positions]
+                        [initial_positions[f"joint_{index}"] for index in range(1, 8)]
                         )
 
 
