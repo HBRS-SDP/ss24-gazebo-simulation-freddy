@@ -170,6 +170,9 @@ class KeyboardPress():
 
             return []
         
+        else:
+            return []
+        
         increment: np.ndarray = moveBy * self.speed
 
         return increment
@@ -206,7 +209,7 @@ def main(args=None):
             #     press \'q\': Left arm, \'a\': Right arm, \'z\': Base')
 
             # Update commands
-            if increment:
+            if len(increment):
                 freddy_gazebo_publisher.update_state(component, increment)
 
             # Publish messages
